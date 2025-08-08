@@ -122,13 +122,19 @@
             this.start();
         }
 
-        getTargetTime() {
-            const now = new Date();
-            const target = new Date();
-            target.setHours(this.targetHour, 0, 0, 0);
-            if (now > target) target.setDate(target.getDate() + 1);
-            return target;
-        }
+      getTargetTime() {
+    const now = new Date();
+    const utcNow = new Date(now.toISOString());
+    let target = new Date(utcNow);
+    target.setUTCHours(20, 0, 0, 0);
+
+    if (utcNow > target) {
+        target.setUTCDate(target.getUTCDate() + 1);
+    }
+
+    return new Date(target.toLocaleString());
+}
+
 
         getRemaining() {
             const diff = this.getTargetTime() - new Date();
