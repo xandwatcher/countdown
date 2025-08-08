@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>obs widget</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+
+        .digit-container {
+            position: relative;
+            display: inline-block;
+            width: 0.9em;
+            height: 1em;
+            perspective: 500px;
+        }
+
+
+        .digit {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+            transition: transform 0.6s ease, opacity 0.6s ease;
+            color: white;
+
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8);
+        }
+
+
+
+        .digit.exit-up {
+            transform: rotateX(-180deg);
+            opacity: 0;
+        }
+
+        .digit.enter-down {
+            transform: rotateX(180deg);
+            opacity: 0;
+        }
+
+        .digit.current {
+            transform: rotateX(0deg);
+            opacity: 1;
+        }
+
+
+        .digit.enter-down {
+            transform: rotateX(90deg);
+            opacity: 0;
+        }
+
+        .separator {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-black min-h-screen flex items-center justify-center">
+    <div class="text-center">
+        <div class="text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight">
+            <div class="flex items-center justify-center space-x-0">
+                <div class="digit-container">
+                    <div class="digit current" id="hT">0</div>
+                </div>
+                <div class="digit-container">
+                    <div class="digit current" id="hO">0</div>
+                </div>
+                <span class="separator text-blue-400">:</span>
+                <div class="digit-container">
+                    <div class="digit current" id="mT">0</div>
+                </div>
+                <div class="digit-container">
+                    <div class="digit current" id="mO">0</div>
+                </div>
+                <span class="separator text-blue-400">:</span>
+                <div class="digit-container">
+                    <div class="digit current" id="sT">0</div>
+                </div>
+                <div class="digit-container">
+                    <div class="digit current" id="sO">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-blue-300 text-lg sm:text-xl md:text-2xl font-semibold mt-2 tracking-tight">
+            until world 3
+        </div>
+    </div>
+</body>
+
+
+<script>
+    class CountdownTimer {
+        constructor(targetHour = 22) {
+            this.targetHour = targetHour;
+            this.digits = ["hT", "hO", "mT", "mO", "sT", "sO"]
+                .reduce((acc, id) => ({ ...acc, [id]: document.getElementById(id) }), {});
+            this.prev = Object.fromEntries(Object.keys(this.digits).map(k => [k, "0"]));
+            this.start();
+        }
+
+        getTargetTime() {
+            const now = new Date();
+            const target = new Date();
+            target.setHours(this.targetHour, 0, 0, 0);
+            if (now > target) target.setDate(target.getDate() + 1);
+            return target;
+        }
+
+        getRemaining() {
+            const diff = this.getTargetTime() - new Date();
+            if (diff <= 0) return { h: 0, m: 0, s: 0 };
+            return {
+                h: Math.floor(diff / 3600000),
+                m: Math.floor((diff % 3600000) / 60000),
+                s: Math.floor((diff % 60000) / 1000)
+            };
+        }
+
+        animateDigit(id, val) {
+            if (this.prev[id] === val) return;
+            const oldEl = this.digits[id];
+            const newEl = document.createElement("div");
+            newEl.className = "digit enter-down";
+            newEl.textContent = val;
+            oldEl.parentNode.appendChild(newEl);
+
+            oldEl.classList.remove("current");
+            oldEl.classList.add("exit-up");
+
+            setTimeout(() => {
+                newEl.classList.remove("enter-down");
+                newEl.classList.add("current");
+            }, 10);
+
+            setTimeout(() => {
+                oldEl.remove();
+                this.digits[id] = newEl;
+                this.prev[id] = val;
+            }, 600);
+        }
+
+        update() {
+            const t = this.getRemaining();
+            const vals = {
+                hT: Math.floor(t.h / 10),
+                hO: t.h % 10,
+                mT: Math.floor(t.m / 10),
+                mO: t.m % 10,
+                sT: Math.floor(t.s / 10),
+                sO: t.s % 10
+            };
+            for (const [id, val] of Object.entries(vals)) {
+                this.animateDigit(id, String(val));
+            }
+        }
+
+        start() {
+            this.update();
+            setInterval(() => this.update(), 1000);
+        }
+    }
+
+    window.addEventListener("load", () => new CountdownTimer(22));
+</script>
+</body>
+
+</html>
